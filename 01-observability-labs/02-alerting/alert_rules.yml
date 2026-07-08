@@ -1,0 +1,32 @@
+groups:
+  - name: alerting-rules
+    rules:
+      - alert: AppTargetDown
+        expr: up{job="app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "App target down (job=app)"
+          description: "Prometheus cannot scrape the `app` job. Affected instance: {{ $labels.instance }}"
+
+      - alert: HighErrorRate
+        expr: >-
+          (sum by (instance)(rate(api_requests_total{status="500"}[1m])))
+          /
+          (sum by (instance)(rate(api_requests_total[1m]))) > 0.2
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "HTTP 5xx error rate > 20% over the last minute on {{ $labels.instance }}. Check application logs and downstream services."
+
+      - alert: AlwaysFiring
+        expr: vector(1)
+        for: 0s
+        labels:
+          severity: info
+        annotations:
+          summary: "Heartbeat - always firing"
+          description: "A local test alert that is always firing to validate alert delivery and routing."
